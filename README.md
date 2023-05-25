@@ -45,8 +45,7 @@ video.download( path = './', quality = pyhub.Quality.BEST )
 Minimum python version: `3.11`
 Dependencies: `requests`
 
-Clone the repository:
+Install using pip:
 ```sh
-git clone https://github.com/Egsagon/pyhub
+pip install git+https://github.com/Egsagon/pornhub-fetch.git
 ```
-TODO
