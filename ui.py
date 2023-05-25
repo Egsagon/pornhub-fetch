@@ -4,7 +4,7 @@ from tkinter import ttk
 import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
 
-import pyhub
+import phfetch
 
 class App(tk.Tk):
     

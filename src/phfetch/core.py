@@ -2,7 +2,7 @@ import os
 import requests
 from typing import Callable
 
-from pornhub_fetch import utils
+from phfetch import utils
 
 
 class Video:
