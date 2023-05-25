@@ -40,6 +40,9 @@ video.download( path = './', quality = 'best')
 video.download( path = './', quality = pyhub.Quality.BEST )
 ```
 
+An example UI implementation can be found in the `ui.py` file:
+![image](https://github.com/Egsagon/pornhub-fetch/blob/master/demo.png)
+
 ## Installation
 
 Minimum python version: `3.11`
