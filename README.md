@@ -1,4 +1,4 @@
-# PyHub
+# PH Fetch
 
 A light python interface for fetching and downloading videos from Pornhub.
 
