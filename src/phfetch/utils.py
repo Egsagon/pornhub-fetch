@@ -7,11 +7,10 @@ base = 'https://fr.pornhub.com/view_video.php?viewkey='
 re_comments = re.compile(r'\/\*.*?\*\/')
 re_flash = re.compile(r'var (flashvars_\d*) = ({.*});\n')
 re_votes = re.compile(r'span class=\"votes(Up|Down)\" data-rating.*?>(.*?)<')
-# re_author = re.compile(r'a href=\"(/channels/.*?)\" data-event.*?>(.*?)<.*?span>(.*?) Videos<.*?<span>(.*?) Subscribers<')
 
-re_author = re.compile(r'a href=\"(\/channels\/.*?)\" data-event.*?>(.*?)<')
-re_author_videos = re.compile(r'n>(.*?) Videos', re.M)
-re_author_subs = re.compile(r'n>(.*?) Subscribers')
+re_datalayer = re.compile(r'window\.dataLayer\.push\(({.*?})\);', re.DOTALL)
+re_interdata = re.compile(r'interactionStatistic\": \[(.*?)\]', re.DOTALL)
+
 
 class Quality:
     BEST = 'best'
@@ -86,6 +85,7 @@ def nameify(title: str) -> str:
     
     allowed = string.ascii_letters + string.digits + ' '
     
-    return ''.join(char for char in title if char in allowed)
+    return '-'.join(''.join(char for char in title
+                            if char in allowed).strip().split())
 
 # EOF

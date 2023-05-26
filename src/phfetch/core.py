@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+import json
 import requests
 from dataclasses import dataclass
 from typing import Callable, Self
@@ -23,29 +26,36 @@ class Tag:
 class Author:
     url: str
     name: str
+    model_type: str
     videos: str
     subscribers: str
     
     @classmethod
-    def from_page(cls, page: str) -> Self:
+    def parse(cls, video: Video) -> Self:
         '''
         Parse the author from a video page.
         '''
         
-        channel = utils.re_author.findall(page)[0]
-        videos = utils.re_author_videos.findall(page)
-        subs = utils.re_author_subs.findall(page)
-        
         return cls(
-            url = channel[0],
-            name = channel[1],
-            videos = videos,    # TODO Not working
-            subscribers = subs  # TODO
+            
+            # TODO
+            url = None,
+            videos = None,
+            subscribers = None,
+            
+            name = video.datalayer['videodata']['video_uploader_name'],
+            model_type = video.datalayer['videodata']['video_uploader']
+            
         )
-
+    
+    def __eq__(self, other: Author) -> bool:
+        '''
+        Compares two authors.
+        '''
+        
+        return self.url == other.url
 
 class Video:
-    
     def __init__(self,
                  url: str = None,
                  key: str = None,
@@ -67,13 +77,14 @@ class Video:
         
         self.page: str = None
         self.data: dict = None
+        self._datalayer: dict = None
         self.session = session or requests.Session()
         
         if preload:
             self._fetch()
     
     def __str__(self) -> str:
-        return f'<Video url={self.viewkey}>'
+        return f'<phfetch.Video key={self.viewkey}>'
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -109,7 +120,6 @@ class Video:
         '''
         
         tags = self._lazy_fetch().get('actionTags').split(',')
-        
         return [Tag(*tag.split(':')) for tag in tags]
     
     @property
@@ -121,7 +131,34 @@ class Video:
         matches = utils.re_votes.findall(self.page)
         votes = {t.lower(): v for t, v in matches}
         
-        return Vote(votes['up'], votes['down'])
+        return Vote(self, votes['up'], votes['down'])
+    
+    @property
+    def vues(self) -> int:
+        '''
+        The amount of people that watched that video.
+        '''
+        
+        self._lazy_fetch()
+        raw = utils.re_interdata.findall(self.page)[0]
+        data = json.loads(f'[{raw}]')
+        
+        return int(data[0]['userInteractionCount'].replace(' ', ''))
+    
+    @property
+    def datalayer(self) -> dict:
+        '''
+        Parsed data layer provided by Pornhub for advanced infos.
+        '''
+        
+        self._lazy_fetch()
+        
+        if self._datalayer is None:
+            
+            raw = utils.re_datalayer.findall(self.page)[0]
+            self._datalayer = json.loads(raw.replace("'", '"'))
+        
+        return self._datalayer
     
     @property
     def author(self) -> Author:
@@ -130,7 +167,7 @@ class Video:
         '''
         
         self._lazy_fetch()
-        return Author.from_page(self.page)
+        return Author.parse(self)
     
     @property
     def orientation(self) -> bool:
@@ -155,7 +192,7 @@ class Video:
         The video title.
         '''
         
-        return self._lazy_fetch().get('video_title', 1)
+        return self._lazy_fetch().get('video_title')
     
     @property
     def hotspots(self) -> list[int]:
@@ -209,12 +246,20 @@ class Video:
         return [segment_base + url
                 for url in utils.parse_M3U(raw.text)]
     
+    def refresh(self) -> None:
+        '''
+        Refresh the data on the page.
+        '''
+        
+        self._fetch()
+    
     def download(self,
                  path: str,
                  quality: str = 'best',
                  verbose: bool = True,
                  thread: bool = False,
-                 callback: Callable = print) -> str:
+                 callback: Callable = print,
+                 escape_stdout: bool = True) -> str:
         '''
         Download the video at a certain path.
         If the specified path is a directory,
@@ -222,6 +267,7 @@ class Video:
         name.
         Returns the path it was written to.
         
+        NOTE - If path is dir it must have a trailling '/'
         TODO - multithread downloading
         '''
         
@@ -232,8 +278,6 @@ class Video:
         if os.path.isdir(path):
             name = utils.nameify(self.title)
             path = path + f'{name}.mp4'
-        
-        print('saving as', name)
         
         if verbose: callback('[*] Using path', path)
         
@@ -250,7 +294,9 @@ class Video:
                 if verbose:
                     
                     if callback is print:
-                        callback(f'[*] Downloading \033[91m{self.viewkey}\033[0m: \033[92m{i}\033[0m/{len(segments)}')
+                        callback('\r' if escape_stdout else '' + \
+                                 f'[*] Downloading \033[91m{self.viewkey}\033[0m: ' + \
+                                 '\033[92m{i}\033[0m/{len(segments)}', end = '')
                     else:
                         callback('Downloading', i, len(segments))
         
