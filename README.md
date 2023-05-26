@@ -6,13 +6,13 @@ A light python interface for fetching and downloading videos from Pornhub.
 
 Initialisation:
 ```python
-import pyhub
+import phfetch
 
 # Initialise with a video url
-video = pyhub.video( url = 'https://...' )
+video = phfetch.video( url = 'https://...' )
 
 # Or a viewkey token
-video = pyhub.video( key = 'xxxxxxxxxx' )
+video = phfetch.video( key = 'xxxxxxxxxx' )
 ```
 
 Available video infos:
