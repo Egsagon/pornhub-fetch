@@ -1,11 +1,51 @@
 import os
 import requests
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Self
 
 from phfetch import utils
 
 
+@dataclass
+class Vote:
+    up: str
+    down: str
+
+@dataclass
+class Tag:
+    name: str
+    count: int
+    
+    def __post_init__(self) -> None:
+        self.count = int(self.count)
+
+@dataclass
+class Author:
+    url: str
+    name: str
+    videos: str
+    subscribers: str
+    
+    @classmethod
+    def from_page(cls, page: str) -> Self:
+        '''
+        Parse the author from a video page.
+        '''
+        
+        channel = utils.re_author.findall(page)[0]
+        videos = utils.re_author_videos.findall(page)
+        subs = utils.re_author_subs.findall(page)
+        
+        return cls(
+            url = channel[0],
+            name = channel[1],
+            videos = videos,    # TODO Not working
+            subscribers = subs  # TODO
+        )
+
+
 class Video:
+    
     def __init__(self,
                  url: str = None,
                  key: str = None,
@@ -25,6 +65,7 @@ class Video:
             self.url = utils.base + key
             self.viewkey = key
         
+        self.page: str = None
         self.data: dict = None
         self.session = session or requests.Session()
         
@@ -60,6 +101,45 @@ class Video:
         '''
         
         return self._lazy_fetch().get('video_duration')
+    
+    @property
+    def tags(self) -> list[Tag]:
+        '''
+        The referenced video tags.
+        '''
+        
+        tags = self._lazy_fetch().get('actionTags').split(',')
+        
+        return [Tag(*tag.split(':')) for tag in tags]
+    
+    @property
+    def votes(self) -> Vote:
+        '''
+        Up and down thumbs.
+        '''
+        
+        matches = utils.re_votes.findall(self.page)
+        votes = {t.lower(): v for t, v in matches}
+        
+        return Vote(votes['up'], votes['down'])
+    
+    @property
+    def author(self) -> Author:
+        '''
+        The author account of the video.
+        '''
+        
+        self._lazy_fetch()
+        return Author.from_page(self.page)
+    
+    @property
+    def orientation(self) -> bool:
+        '''
+        True -> Landscape mode
+        False -> Portrait mode
+        '''
+        
+        return not bool(self._lazy_fetch().get('isVertical'))
     
     @property
     def image(self) -> str:
@@ -103,6 +183,7 @@ class Video:
         
         # Fetch infos
         self.data = utils.resolve_script(res.text)
+        self.page = res.text
     
     def _get_segments(self, quality: str = 'best') -> list[str]:
         '''
