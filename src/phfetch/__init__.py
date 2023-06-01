@@ -1,8 +1,11 @@
 '''
 pornhub_fetch - Pornhub video downloading interface
 
-https://github.com/Egsagon/pornhub-fetch
+See https://github.com/Egsagon/pornhub-fetch for docs
 '''
 
+from phfetch import core
 from phfetch.utils import Quality
-from phfetch.core import Video as video
+from phfetch.core import Video, Video as video
+
+# EOF

@@ -31,23 +31,16 @@ class App(tk.Tk):
         self.bar = ttk.Progressbar(self, mode = 'determinate', value = 0)
         self.bar.pack(fill = 'x', padx = 24, pady = 24)
     
-    def on_verbose(self, *args) -> None:
+    def on_verbose(self, cur: int, total: int) -> None:
         '''
         Update the app status.
         '''
         
-        msg = args
+        pro = round((cur / total) * 100)
         
-        if len(args) == 3:
-            *msg, cur, out = args
-            
-            msg += [f'[{cur}/{out}]']
-            
-            # Update progress bar
-            self.bar.config(value = (cur / out) * 100)
-        
-        # Update label
-        self.status.set(' '.join(msg))
+        # Update progress bar and label
+        self.bar.config(value = pro)
+        self.status.set(f'Downloading {pro}% [{cur}/{total}]')
     
     def download(self, *_) -> None:
         '''
@@ -57,10 +50,16 @@ class App(tk.Tk):
         def main():
             try:
                 url = self.url.get()
-                video = pyhub.video(url)
+                video = phfetch.video(url)
                 path = tkfd.askdirectory() + '/'
                 
                 video.download(path, callback = self.on_verbose)
+                
+                # Reset app
+                self.status.set('Enter video URL')
+                self.url.delete(0, tk.END)
+                self.bar.config(value = 0)
+                
                 tkmb.showinfo('Done', 'Downloaded video!')
             
             except Exception as err:

@@ -55,6 +55,7 @@ class Author:
         
         return self.url == other.url
 
+
 class Video:
     def __init__(self,
                  url: str = None,
@@ -63,6 +64,12 @@ class Video:
                  preload: bool = True) -> None:
         '''
         Represents a Pornhub video.
+        
+        Arguments
+            url: video url.
+            key: video viewkey (in replacment for url).
+            session: optional session to inherit from.
+            preload: wether to fetch on initialisation.
         '''
         
         if url:
@@ -81,7 +88,7 @@ class Video:
         self.session = session or requests.Session()
         
         if preload:
-            self._fetch()
+            self.refresh()
     
     def __str__(self) -> str:
         return f'<phfetch.Video key={self.viewkey}>'
@@ -91,10 +98,10 @@ class Video:
     
     def _lazy_fetch(self) -> dict:
         '''
-        Fetch the data if needed.
+        Same as refresh but using a cache system.
         '''
         
-        if not self.data: self._fetch()
+        if not self.data: self.refresh()
         return self.data
     
     @property
@@ -134,7 +141,7 @@ class Video:
         return Vote(self, votes['up'], votes['down'])
     
     @property
-    def vues(self) -> int:
+    def views(self) -> int:
         '''
         The amount of people that watched that video.
         '''
@@ -203,9 +210,10 @@ class Video:
         li = self._lazy_fetch().get('hotspots')
         return list(map(int, li))
     
-    def _fetch(self) -> None:
+    def refresh(self) -> None:
         '''
-        Fetch the HTML page and what's intersting in it.
+        Fetch the video page.
+        Can be used to refresh video data.
         '''
         
         # Add cookie to remove age confirmation popup
@@ -222,9 +230,16 @@ class Video:
         self.data = utils.resolve_script(res.text)
         self.page = res.text
     
-    def _get_segments(self, quality: str = 'best') -> list[str]:
+    def M3U(self, quality: str = 'best') -> str:
         '''
-        Fetch the video fragments.
+        Get the url of the M3U file representing
+        a certain video quality.
+        
+        Arguments
+            quality: needed quality of the video.
+        
+        Returns
+            an URL.
         '''
         
         # Get master URL for the quality
@@ -239,68 +254,80 @@ class Video:
         segment_base = url.split('master.m3u8')[0]
         segments_url = utils.parse_M3U(raw.text)[0]
         
-        raw = self.session.get(segment_base + segments_url)
-        assert raw.ok, 'Connection error'
+        return segment_base + segments_url
+    
+    def get_segments(self, quality: str = 'best') -> list[str]:
+        '''
+        Fetch and parse the video segments.
+        
+        Arguments
+            quality: needed quality of the video.
+        
+        Returns
+            A list of complete urls for each video segment.
+        '''
+        
+        # Get M3U url
+        url = self.M3U(quality)
+        base = os.path.dirname(url) + '/'
+        
+        raw = self.session.get(url)
+        assert raw.ok, 'Connection failure'
         
         # Parse file and append base URL
-        return [segment_base + url
+        return [base + url
                 for url in utils.parse_M3U(raw.text)]
-    
-    def refresh(self) -> None:
-        '''
-        Refresh the data on the page.
-        '''
-        
-        self._fetch()
     
     def download(self,
                  path: str,
                  quality: str = 'best',
-                 verbose: bool = True,
-                 thread: bool = False,
-                 callback: Callable = print,
-                 escape_stdout: bool = True) -> str:
+                 quiet: bool = False,
+                 callback: Callable[[int, int], None] = None) -> str:
         '''
-        Download the video at a certain path.
-        If the specified path is a directory,
-        add the video to the dir with a custom*
-        name.
-        Returns the path it was written to.
+        Locally download the video.
         
-        NOTE - If path is dir it must have a trailling '/'
-        TODO - multithread downloading
+        Arguments
+            path:     filepath/dirpath to the download location.
+            quality:  needed quality of the video.
+            quiet:    wether to print current download status.
+            callback: optionnal function to call on download update.
+        
+        Note - The callback will receive the current index and the total
+        as arguments.
+        
+        Returns
+            The path it has written the file to.
         '''
         
-        segments = self._get_segments(quality)
+        segments = self.get_segments(quality)
         
-        if verbose: callback('[*] Fetched M3U data')
+        if not quiet:
+            print('[*] Fetched M3U data')
         
         if os.path.isdir(path):
-            name = utils.nameify(self.title)
-            path = path + f'{name}.mp4'
-        
-        if verbose: callback('[*] Using path', path)
+            # NOTE - We could choose to set the default name as the video
+            # title or its viewkey. I prefer the viewekey because cleaner
+            
+            # path = path + f'{utils.nameify(self.title)}.mp4'
+            path = path + f'{self.viewkey}.mp4'
         
         with open(path, 'wb') as output:
-            
             for i, url in enumerate(segments):
 
                 raw = self.session.get(url)
-                
-                # print(raw.content)
-                
+                assert raw.ok, 'Connection failure'
                 output.write(raw.content)
             
-                if verbose:
-                    
-                    if callback is print:
-                        callback('\r' if escape_stdout else '' + \
-                                 f'[*] Downloading \033[91m{self.viewkey}\033[0m: ' + \
-                                 '\033[92m{i}\033[0m/{len(segments)}', end = '')
-                    else:
-                        callback('Downloading', i, len(segments))
+                if not quiet:
+                    print(f'\r[*] Downloading \033[92m{i}\033[0m/{len(segments)}', end = '')
+                
+                # Send to callback if exists
+                if callable(callback):
+                    callback(i, len(segments))
         
-        callback('[*] Operation done successfully.')
+        if not quiet:
+            print(f'\n[*] Downloaded \033[93m{self.viewkey}\033[0m.')
+        
         return path
 
 # EOF
