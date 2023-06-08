@@ -64,6 +64,7 @@ Note: All these properties are cached. If you want to reload them, use `video.re
 | `model_type`  | `str`         | The author model type            |
 | `videos`      | `list[Video]` | Author videos (not implemented)  |
 | `subscribers` | `int`         | Amount of people subscribed (not implemented) |
+
 Note: `Author` objects are comparable.
 
 ## Advanced downloading
