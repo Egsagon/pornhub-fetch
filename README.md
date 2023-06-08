@@ -72,9 +72,10 @@ To extract a video without dowloading it, call one of these functions:
 ```py
 video.M3U(quality = 'best') # Get the raw M3U8 file of the video
 ```
-````py
+```py
 video.get_segments(quality = 'best') # Same as before but parses the file to get only URLs
 ```
+
 This can be useful if you want to use a threaded download script of FFMPEG to download the video faster (currently, PHFetch just fetches one segment at a time and append it to a file).
 
 ## Why?
