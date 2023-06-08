@@ -76,7 +76,7 @@ class Query:
         
         # Fetch page
         res = self.session.get(f'{self.url}&page={index + 1}')
-        assert res.ok, ConnectionError
+         assert res.ok, 'failed to fetch counter'
         raw = res.text
         
         # Define query length if not defined yet
