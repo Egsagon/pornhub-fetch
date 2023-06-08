@@ -2,7 +2,19 @@
 
 A light python interface for fetching and downloading videos from Pornhub.
 
-## Usage
+## Installation
+
+Minimum python version: `3.11`
+Dependencies: `requests`
+
+Install using pip:
+```sh
+pip install phfetch
+# or, to get latest release
+pip install git+https://github.com/Egsagon/pornhub-fetch.git
+```
+
+## Usage (TODO)
 
 Initialisation:
 ```python
@@ -38,19 +50,4 @@ video.download( path = './', quality = 'best')
 # Can also be a constant from pyhub.Quality, e.g:
 
 video.download( path = './', quality = pyhub.Quality.BEST )
-```
-
-An example UI implementation can be found in the `ui.py` file:
-![image](https://github.com/Egsagon/pornhub-fetch/blob/master/demo.png)
-
-## Installation
-
-Minimum python version: `3.11`
-Dependencies: `requests`
-
-Install using pip:
-```sh
-pip install phfetch
-# or, to get latest release
-pip install git+https://github.com/Egsagon/pornhub-fetch.git
 ```
