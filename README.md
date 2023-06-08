@@ -50,5 +50,7 @@ Dependencies: `requests`
 
 Install using pip:
 ```sh
+pip install phfetch
+# or, to get latest release
 pip install git+https://github.com/Egsagon/pornhub-fetch.git
 ```
