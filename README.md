@@ -53,6 +53,7 @@ Alongside being able to download videos, this API is able to parse some useful P
 | `video.tags`        | `list[Tag]` | List of objectd with `name` and `count` attibutes |
 | `video.datalayer`   | `dict`      | Advanced data provided by PornHub (can be useful) |
 | `video.author`      | `Author`    | Object representing a PornHub user                |
+
 Note: All these properties are cached. If you want to reload them, use `video.refresh()`.
 
 `Author` object have the following attributes:
