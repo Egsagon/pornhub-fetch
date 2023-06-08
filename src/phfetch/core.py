@@ -61,7 +61,8 @@ class Video:
                  url: str = None,
                  key: str = None,
                  session: requests.Session = None,
-                 preload: bool = True) -> None:
+                 preload: bool = True,
+                 search_data: dict = None) -> None:
         '''
         Represents a Pornhub video.
         
@@ -70,6 +71,7 @@ class Video:
             key: video viewkey (in replacment for url).
             session: optional session to inherit from.
             preload: wether to fetch on initialisation.
+            search_data: data passed by the search module.
         '''
         
         if url:
@@ -86,6 +88,8 @@ class Video:
         self.data: dict = None
         self._datalayer: dict = None
         self.session = session or requests.Session()
+        
+        self.search_data = search_data
         
         if preload:
             self.refresh()

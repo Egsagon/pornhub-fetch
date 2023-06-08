@@ -2,14 +2,21 @@ import re
 import json
 import string
 
-base = 'https://fr.pornhub.com/view_video.php?viewkey='
+root = 'https://fr.pornhub.com/'
+base = root + 'view_video.php?viewkey='
 
+# Video pages regexes
 re_comments = re.compile(r'\/\*.*?\*\/')
 re_flash = re.compile(r'var (flashvars_\d*) = ({.*});\n')
 re_votes = re.compile(r'span class=\"votes(Up|Down)\" data-rating.*?>(.*?)<')
 
+# JS regexes
 re_datalayer = re.compile(r'window\.dataLayer\.push\(({.*?})\);', re.DOTALL)
 re_interdata = re.compile(r'interactionStatistic\": \[(.*?)\]', re.DOTALL)
+
+# Query regexes
+re_query_counter = re.compile(r'showingCounter\">.*? (\d+) +</', re.DOTALL)
+re_query_videos = re.compile(r'<li .*?videoblock.*?data-video-vkey=\"(.*?)\".*?title=\"(.*?)\"', re.DOTALL)
 
 
 class Quality:
