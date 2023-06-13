@@ -1,3 +1,7 @@
+# DEPRECATED - USE [PHUB](https://github.com/Egsagon/PHUB) INSTEAD
+
+--------------------------------
+
 # PH Fetch
 
 A light python interface for fetching and downloading videos from PornHub.
